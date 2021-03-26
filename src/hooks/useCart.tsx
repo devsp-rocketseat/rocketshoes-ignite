@@ -38,7 +38,7 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
       const productExists = updatedCart.find(({ id }) => id === productId)
 
-      const stock = await api.get(`/stock/${productId}`)
+      const stock = await api.get<Stock>(`/stock/${productId}`)
 
       const stockAmount = stock.data.amount
       const currentAmount = productExists ? productExists.amount : 0
@@ -67,6 +67,12 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
   const removeProduct = (productId: number) => {
     try {
+      const productExists = cart.find(({ id }) => id === productId)
+      if (!productExists) {
+        toast.error('Erro na remoção do produto');
+        return;
+      }
+
       const updatedCart = cart.filter(({ id }) => id !== productId)
       setCart(updatedCart)
       localStorage.setItem('@RocketShoes:cart', JSON.stringify(updatedCart))
@@ -77,10 +83,15 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
   const updateProductAmount = async ({ productId, amount }: UpdateProductAmount) => {
     try {
+      if (amount < 1) return
+
       const updatedCart = [...cart]
 
       const productExists = updatedCart.find(({ id }) => id === productId)
-      if (!productExists) return
+      if (!productExists) {
+        toast.error('Erro na alteração de quantidade do produto');
+        return;
+      }
 
       const stock = await api.get(`/stock/${productId}`)
       const stockAmount = stock.data.amount
